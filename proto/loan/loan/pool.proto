@@ -1,0 +1,12 @@
+syntax = "proto3";
+package loan.loan;
+
+option go_package = "loan/x/loan/types";
+import "gogoproto/gogo.proto"; 
+import "cosmos/base/v1beta1/coin.proto"; 
+
+message Pool {
+  cosmos.base.v1beta1.Coin token1 = 1 [(gogoproto.nullable) = false]; 
+  cosmos.base.v1beta1.Coin token2 = 2 [(gogoproto.nullable) = false]; 
+  uint64 id = 3; 
+}

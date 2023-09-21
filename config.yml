@@ -1,0 +1,35 @@
+version: 1
+accounts:
+- name: alice
+  coins:
+  - 100000000000ctz
+  - 100000000000usdc
+  - 10000000000000000000cstk
+  mnemonic: fire expand radio cargo trust swap swear stereo reduce middle illegal surprise
+- name: vault
+  coins:
+  - 10000000000000000000cstk
+  mnemonic: rain employ october forum spatial select faculty female hundred globe offer climb
+- name: carol
+  coins:
+  - 100000000000cqt
+  - 100000000000usdc
+  # = 1 * 10**18
+  - 1000000000000000000cstk
+  mnemonic: grape glass exotic van submit move civil spoon penalty hard discover unaware
+client:
+  openapi:
+    path: docs/static/openapi.yml
+faucet:
+  name: vault
+  coins:
+  - 1000000000000000000cstk
+validators: 
+- name: alice
+  bonded: 1000000000000000000cstk
+
+genesis:
+  app_state:
+    staking:
+      params:
+        bond_denom: "cstk"
