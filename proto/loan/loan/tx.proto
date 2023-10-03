@@ -3,14 +3,25 @@ syntax = "proto3";
 package loan.loan;
 
 import "cosmos/base/v1beta1/coin.proto";
+import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "loan/x/loan/types";
 
 // Msg defines the Msg service.
 service Msg {
-  rpc RequestLoan     (MsgRequestLoan    ) returns (MsgRequestLoanResponse    );
-  rpc RepayLoan       (MsgRepayLoan      ) returns (MsgRepayLoanResponse      );
+  rpc RequestLoan     (MsgRequestLoan    ) returns (MsgRequestLoanResponse    ){
+    option (google.api.http) = {
+      post: "/loan/RequestLoan"
+      body: "*"
+    };
+  };
+  rpc RepayLoan       (MsgRepayLoan      ) returns (MsgRepayLoanResponse      ){
+    option (google.api.http) = {
+      post: "/loan/loan/repay"
+      body: "*"
+    };
+  };;
   rpc LiquidateLoan   (MsgLiquidateLoan  ) returns (MsgLiquidateLoanResponse  );
   rpc CancelLoan      (MsgCancelLoan     ) returns (MsgCancelLoanResponse     );
   rpc Redeem          (MsgRedeem         ) returns (MsgRedeemResponse         );
@@ -27,7 +38,9 @@ message MsgRequestLoan {
   string deadline   = 5;
 }
 
-message MsgRequestLoanResponse {}
+message MsgRequestLoanResponse {
+  string message    = 1;
+}
 
 
 message MsgRepayLoan {

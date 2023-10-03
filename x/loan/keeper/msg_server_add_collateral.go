@@ -21,7 +21,9 @@ func (k msgServer) AddCollateral(goCtx context.Context, msg *types.MsgAddCollate
 		return nil, sdkerrors.Wrapf(types.ErrWrongLoanState, "loan %d is not in requested state", msg.Id)
 	}
 
-	collateral, amount, borrower := k.GetLoanContent(ctx, loan)
+	amount, _ := sdk.ParseCoinsNormalized(msg.Amount)
+	
+	collateral, _, borrower := k.GetLoanContent(ctx, loan)
 
 	getCwei := amount[0].Amount.Mul(types.Cwei)
 

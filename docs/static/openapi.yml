@@ -587,6 +587,94 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
+  /loan/RequestLoan:
+    post:
+      operationId: LoanLoanRequestLoan
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              creator:
+                type: string
+              amount:
+                type: string
+              fee:
+                type: string
+              collateral:
+                type: string
+              deadline:
+                type: string
+      tags:
+        - Msg
+  /loan/loan/repay:
+    post:
+      operationId: LoanLoanRepayLoan
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              creator:
+                type: string
+              id:
+                type: string
+                format: uint64
+      tags:
+        - Msg
 definitions:
   cosmos.auth.v1beta1.MsgUpdateParamsResponse:
     type: object
@@ -2646,10 +2734,34 @@ definitions:
     type: object
   loan.loan.MsgRedeemResponse:
     type: object
+  loan.loan.MsgRepayLoan:
+    type: object
+    properties:
+      creator:
+        type: string
+      id:
+        type: string
+        format: uint64
   loan.loan.MsgRepayLoanResponse:
     type: object
+  loan.loan.MsgRequestLoan:
+    type: object
+    properties:
+      creator:
+        type: string
+      amount:
+        type: string
+      fee:
+        type: string
+      collateral:
+        type: string
+      deadline:
+        type: string
   loan.loan.MsgRequestLoanResponse:
     type: object
+    properties:
+      message:
+        type: string
   loan.loan.MsgStakeResponse:
     type: object
   loan.loan.MsgWithdrawPartialResponse:

@@ -52,6 +52,7 @@ func (k msgServer) RequestLoan(goCtx context.Context, msg *types.MsgRequestLoan)
 		panic(err)
 	}
 	// multiply fee by 10**9 for decimals handled by webserver since parsecoins can't take decimals
+	// !!!do this for collateral as well!!!
 	// fee[0].Amount = fee[0].Amount.MulRaw(1000000000)
 
 	collateralPrice := k.TypedLoan(ctx, collateral)
