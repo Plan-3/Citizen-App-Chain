@@ -13,11 +13,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/require"
+	"loan/x/loan/testutil"
 	"loan/x/loan/keeper"
 	"loan/x/loan/types"
 )
 
-func LoanKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+func LoanKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
+	return LoanKeeperWithMocks(t, nil)
+}
+
+func LoanKeeperWithMocks(t testing.TB, bank *testutil.MockBankKeeper) (keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -41,7 +46,7 @@ func LoanKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		storeKey,
 		memStoreKey,
 		paramsSubspace,
-		nil,
+		bank,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

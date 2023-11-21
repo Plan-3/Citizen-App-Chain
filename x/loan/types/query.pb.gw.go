@@ -400,13 +400,13 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 0, 2, 1}, []string{"loan", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 0, 2, 1}, []string{"loan", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Loan_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 0, 2, 0, 1, 0, 4, 1, 5, 1}, []string{"loan", "id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Loan_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 0, 2, 0, 1, 0, 4, 1, 5, 1}, []string{"loan", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_LoanAll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 0, 2, 0}, []string{"loan"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_LoanAll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 0, 2, 0}, []string{"loan"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_ListPost_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 0, 2, 1}, []string{"loan", "list_post"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ListPost_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 0, 2, 1}, []string{"loan", "list_post"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

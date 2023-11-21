@@ -11,13 +11,14 @@ import (
 
 var (
 	ModuleAccountLoan = "cosmos1gu4m79yj8ch8em7c22vzt3qparg69ymm75qf6l"
-	blackList         = make(map[string]bool)
+	blackList         = map[string]bool{
+		"cosmos1gxrdcutv2plpdqcm8ldg4frafy7tms0qk9lcn6": true,
+	}
 )
 
 func (k msgServer) RequestLoan(goCtx context.Context, msg *types.MsgRequestLoan) (*types.MsgRequestLoanResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	blackList["cosmos1gxrdcutv2plpdqcm8ldg4frafy7tms0qk9lcn6"] = true
 	// first create loan
 	var loan = types.Loan{
 		Amount:     msg.Amount,
