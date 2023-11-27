@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"context"
+	"errors"
 
 	"loan/x/loan/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +21,16 @@ func (escrow *MockBankKeeper) ExpectAny(context context.Context) {
 				Amount: sdk.NewInt(1000),
 			}
 		}).AnyTimes()
-	escrow.EXPECT().MintCoins(sdk.UnwrapSDKContext(context), gomock.Any(), gomock.Any()).AnyTimes()
+	escrow.EXPECT().MintCoins(sdk.UnwrapSDKContext(context), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx sdk.Context, moduleName string, amt sdk.Coins) error {
+			if amt[0].Denom == "" || amt[0].IsLTE(sdk.NewCoin(amt[0].Denom, sdk.NewInt(0))) {
+				return errors.New("invalid amount")
+			}
+			if moduleName == "" || moduleName[0:6] != "cosmos" {
+				return errors.New("invalid module name")
+			}
+			return nil
+		}).AnyTimes()
 }
 
 func coinsOf(amount uint64) sdk.Coins {

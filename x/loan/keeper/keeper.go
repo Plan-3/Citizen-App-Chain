@@ -102,6 +102,11 @@ func (k Keeper) TypedLoan(ctx sdk.Context, token sdk.Coins) *types.TokenPrice {
 		collateralPrice.Denom = token[0]
 		collateralPrice.Price = 100
 		break
+	/* adding in new collateral types breaks tests??
+case "col":
+	collateralPrice.Denom = token[0]
+	collateralPrice.Price = 1000
+	*/
 	default:
 		break
 	}

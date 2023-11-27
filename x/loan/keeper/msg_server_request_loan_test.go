@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"fmt"
+  "fmt"
 	"context"
 	"testing"
 	"runtime/debug"
@@ -15,12 +15,23 @@ import (
 	//"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/golang/mock/gomock"
+	sdkmath "cosmossdk.io/math"
+
 
 )
 
+type collateralPrice struct {
+	coin sdk.Coin 
+	price int
+}
+
 var (
 	moduleaccount = "cosmos1gu4m79yj8ch8em7c22vzt3qparg69ymm75qf6l"
-	alice = "cosmos1cpkpv6v0rdfjk6hfsaq4qjrt7deaa46cp84483"
+	alice         = "cosmos1cpkpv6v0rdfjk6hfsaq4qjrt7deaa46cp84483"
+	bob           = "cosmos1gxrdcutv2plpdqcm8ldg4frafy7tms0qk9lcn6"
+	blackList     = map[string]bool{
+		"cosmos1gxrdcutv2plpdqcm8ldg4frafy7tms0qk9lcn6": true,
+	}
 )
 
 func setUpMsgServer(t testing.TB) (types.MsgServer, keeper.Keeper, context.Context, *gomock.Controller, *testutil.MockBankKeeper) {
@@ -37,27 +48,57 @@ func TestRequestLoan(t *testing.T) {
 			debug.PrintStack()
 			t.FailNow()
 		}
-	}()
-	msgServer, k, context, ctrl, bank := setUpMsgServer(t)
-	borrower, _ := sdk.AccAddressFromBech32(alice)
-	lender, _ := sdk.AccAddressFromBech32(moduleaccount)
-	ctx := sdk.UnwrapSDKContext(context)
-	_ = k
+		}()
+		msgServer, k, context, ctrl, bank := setUpMsgServer(t)
+		borrower, _ := sdk.AccAddressFromBech32(alice)
+		lender, _ := sdk.AccAddressFromBech32(moduleaccount)
+		ctx := sdk.UnwrapSDKContext(context)
+		_ = k
+		
+		bank.ExpectAny(context)
+		defer ctrl.Finish()
+		// create loan
+		loan := createLoan(ctx, t, msgServer, k)
 
-	bank.ExpectAny(context)
-	bank.MintCoins(ctx, alice, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1000))))
-	bank.SendCoinsFromAccountToModule(ctx, borrower, moduleaccount, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(50))))
-	// create loan
-	defer ctrl.Finish()
+		// check mint not returning any error
+		minted := bank.MintCoins(ctx, alice, sdk.NewCoins(sdk.NewCoin("col", sdk.NewInt(100))))
+		require.NoError(t, minted)
+		
+		// test amount is multiplied by 10**9 correctly
+		loanCoinAmount, _ := sdk.ParseCoinsNormalized(loan.Amount)
+		baseAmount := types.Cwei.Mul(loanCoinAmount[0].Amount)
+		require.Equal(t, sdk.NewInt(10000000000), baseAmount, "amount is not equivalent to 10**9")
+		
+		// test coins are sent from borrower to module account
+		ok, err := transferedCoinsToModule(ctx, t, bank, borrower, lender)
+		require.Equal(t, "ok", ok)
+		require.NoError(t, err)
+}
+
+func createLoan(ctx sdk.Context, t *testing.T, msgServer types.MsgServer, k keeper.Keeper) types.Loan{
+	legacyDecPrecision := sdk.NewInt(100000000000000000)
 	loan := types.Loan{
 		Amount:     "10amount",
 		Fee:        "50stake",
-		Collateral: "10collateral",
+		Collateral: "200col",
 		Deadline:   "10000",
 		State:      "requested",
 		Borrower:   alice,
 		Lender:     moduleaccount,
 		Timestamp:  ctx.BlockHeight(),
+	}
+	
+	
+	require.False(t, blackList[loan.Borrower], "borrower is blacklisted")
+	parsedCollateral, _ := sdk.ParseCoinNormalized(loan.Collateral).Mul(legacyDecPrecision)
+	parsedAmount, _ := sdk.ParseCoinNormalized(loan.Amount).Mul(legacyDecPrecision)
+	amtPrice := collateralPrice{
+		coin: parsedAmount,
+		price: 10,
+	}
+	colPrice := collateralPrice{
+		coin: parsedCollateral,
+		price: 1000,
 	}
 	
 	createdLoan, _ := msgServer.RequestLoan(ctx, &types.MsgRequestLoan{
@@ -67,32 +108,71 @@ func TestRequestLoan(t *testing.T) {
 		Deadline: loan.Deadline, 
 		Creator: loan.Borrower,
 	})
-	// test amount is multiplied by 10**9 correctly
-	loanCoinAmount, _ := sdk.ParseCoinsNormalized(loan.Amount)
-	baseAmount := types.Cwei.Mul(loanCoinAmount[0].Amount)
-	require.Equal(t, sdk.NewInt(10000000000), baseAmount)
-	fmt.Printf("baseAmount: %v\n%v\n", baseAmount, loanCoinAmount[0].Amount)
+	
+	collateralFloat := sdkmath.LegacyDec(parsedCollateral.Amount)
+	amountFloat := sdkmath.LegacyDec(parsedAmount.Amount)
+	fmt.Printf("%v\n%v\n", collateralFloat, amountFloat)
+	_,_ = amtPrice, colPrice
 
-	// test coins are sent from borrower to module account
-	bank.MintCoins(ctx, alice, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1000))))
-	bank.SendCoinsFromAccountToModule(ctx, borrower, moduleaccount, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(50))))
-	expectedBalanceBorrower := sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(950))) // 1000 (initial) - 50 (loan fee)
-	actualBalanceBorrower := bank.GetBalance(ctx, borrower, "stake")
+	k.AppendLoan(ctx, loan)
+	sysinfo, found := k.GetLoan(ctx, 0)
+	// test loan is created
+	// test loan is found with id of 0
+	require.True(t, found)
+	fmt.Printf("%v\n%v\n%v\n%v\n%v\n%v\n%v\n%v\n%v\n", sysinfo.Id, sysinfo.Amount, sysinfo.Fee, sysinfo.Collateral, sysinfo.Deadline, sysinfo.State, sysinfo.Borrower, sysinfo.Lender, sysinfo.Timestamp)
+	// testing loan values are correctly stored
+	require.Equal(t, loan.Amount, sysinfo.Amount)
+	require.Equal(t, loan.Fee, sysinfo.Fee)
+	require.Equal(t, loan.Collateral, sysinfo.Collateral)
+	require.Equal(t, loan.State, sysinfo.State)
+	require.Equal(t, loan.Borrower, sysinfo.Borrower)
+	require.Equal(t, loan.Lender, sysinfo.Lender)
+	
+
+	_ = createdLoan
+	return loan
+}
+
+func transferedCoinsToModule(ctx sdk.Context, t *testing.T, bank *testutil.MockBankKeeper, borrower sdk.AccAddress, lender sdk.AccAddress) (string, error){
+	// we are not testing any of the cosmos functions here we must assume they are working correctly
+	bank.SendCoinsFromAccountToModule(ctx, borrower, moduleaccount, sdk.NewCoins(sdk.NewCoin("col", sdk.NewInt(50))))
+	expectedBalanceBorrower := sdk.NewCoins(sdk.NewCoin("col", sdk.NewInt(950))) // 1000 (initial) - 50 (loan fee)
+	actualBalanceBorrower := bank.GetBalance(ctx, borrower, "col")
 	// coins returns [] we only test index 0 for now
 	// use .Amount to get the amount of the coin in form of sdk.Int
 	// balance is set to 1000 in the testutil/bank_escrow_helpers.go
 	// can't use dynamic amount so need to manually set it using math func
 	// subtract the collateral
 	// this require equates to 950 = 1000 - 50
-	require.Equal(t, expectedBalanceBorrower[0].Amount, actualBalanceBorrower.Amount.Sub(sdk.NewInt(50)))
+	require.Equal(t, expectedBalanceBorrower[0].Amount, actualBalanceBorrower.Amount.Sub(sdk.NewInt(50)), "Expected balance")
 
-	expectedBalanceLender := sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(50))) // 50 (initial)
-	actualBalanceLender := bank.GetBalance(ctx, lender, "stake")
+	expectedBalanceLender := sdk.NewCoins(sdk.NewCoin("col", sdk.NewInt(50))) // 50 (initial)
+	actualBalanceLender := bank.GetBalance(ctx, lender, "col")
 	// same as balance borrower but need to subtract the 
 	// expected balance of borrower from the initial balance of lender 
 	// to get the expected balance of lender
 	require.Equal(t, expectedBalanceLender[0].Amount, actualBalanceLender.Amount.Sub(expectedBalanceBorrower[0].Amount))
+	return "ok", nil
+}
 
+func transferedCoinsToBorrower(ctx sdk.Context, t *testing.T, bank *testutil.MockBankKeeper, borrower sdk.AccAddress, lender sdk.AccAddress) (string, error){
+	// we are not testing any of the cosmos functions here we must assume they are working correctly
+	bank.SendCoinsFromModuleToAccount(ctx, moduleaccount, borrower, sdk.NewCoins(sdk.NewCoin("zusd", sdk.NewInt(50))))
+	expectedBalanceModule := sdk.NewCoins(sdk.NewCoin("zusd", sdk.NewInt(950))) // 1000 (initial) - 50 (loan fee)
+	actualBalanceModule := bank.GetBalance(ctx, borrower, "zusd")
+	// coins returns [] we only test index 0 for now
+	// use .Amount to get the amount of the coin in form of sdk.Int
+	// balance is set to 1000 in the testutil/bank_escrow_helpers.go
+	// can't use dynamic amount so need to manually set it using math func
+	// subtract the collateral
+	// this require equates to 950 = 1000 - 50
+	require.Equal(t, expectedBalanceModule[0].Amount, actualBalanceModule.Amount.Sub(sdk.NewInt(50)), "Expected balance")
 
-	_ = createdLoan
+	expectedBalanceBorrower := sdk.NewCoins(sdk.NewCoin("zusd", sdk.NewInt(50))) // 50 (initial)
+	actualBalanceBorrower := bank.GetBalance(ctx, lender, "zusd")
+	// same as balance borrower but need to subtract the 
+	// expected balance of borrower from the initial balance of lender 
+	// to get the expected balance of lender
+	require.Equal(t, expectedBalanceBorrower[0].Amount, actualBalanceBorrower.Amount.Sub(expectedBalanceBorrower[0].Amount))
+	return "ok", nil
 }
