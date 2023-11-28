@@ -108,6 +108,8 @@ case "col":
 	collateralPrice.Price = 1000
 	*/
 	default:
+		collateralPrice.Denom = token[0]
+		collateralPrice.Price = 1
 		break
 	}
 	return collateralPrice

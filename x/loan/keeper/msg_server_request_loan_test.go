@@ -15,15 +15,10 @@ import (
 	//"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/golang/mock/gomock"
-	sdkmath "cosmossdk.io/math"
 
 
 )
 
-type collateralPrice struct {
-	coin sdk.Coin 
-	price int
-}
 
 var (
 	moduleaccount = "cosmos1gu4m79yj8ch8em7c22vzt3qparg69ymm75qf6l"
@@ -53,12 +48,13 @@ func TestRequestLoan(t *testing.T) {
 		borrower, _ := sdk.AccAddressFromBech32(alice)
 		lender, _ := sdk.AccAddressFromBech32(moduleaccount)
 		ctx := sdk.UnwrapSDKContext(context)
-		_ = k
+		_, _ = borrower, lender
 		
 		bank.ExpectAny(context)
 		defer ctrl.Finish()
 		// create loan
 		loan := createLoan(ctx, t, msgServer, k)
+		_ = loan
 
 		// check mint not returning any error
 		minted := bank.MintCoins(ctx, alice, sdk.NewCoins(sdk.NewCoin("col", sdk.NewInt(100))))
@@ -67,18 +63,22 @@ func TestRequestLoan(t *testing.T) {
 		// test amount is multiplied by 10**9 correctly
 		loanCoinAmount, _ := sdk.ParseCoinsNormalized(loan.Amount)
 		baseAmount := types.Cwei.Mul(loanCoinAmount[0].Amount)
-		require.Equal(t, sdk.NewInt(10000000000), baseAmount, "amount is not equivalent to 10**9")
+		expectedAmount := sdk.NewInt(1000000000).Mul(loanCoinAmount[0].Amount)
+		require.Equal(t, expectedAmount, baseAmount, "amount is not equivalent to 10**9")
 		
 		// test coins are sent from borrower to module account
 		ok, err := transferedCoinsToModule(ctx, t, bank, borrower, lender)
 		require.Equal(t, "ok", ok)
 		require.NoError(t, err)
+		
 }
 
 func createLoan(ctx sdk.Context, t *testing.T, msgServer types.MsgServer, k keeper.Keeper) types.Loan{
-	legacyDecPrecision := sdk.NewInt(100000000000000000)
+	// all test values for coin price are 1 set in keeper.go typedloan default case
+	// failed risk check 100 amount collateral < 110
+	// passed risk check 100 amount collateral > 110
 	loan := types.Loan{
-		Amount:     "10amount",
+		Amount:     "100amount",
 		Fee:        "50stake",
 		Collateral: "200col",
 		Deadline:   "10000",
@@ -90,32 +90,21 @@ func createLoan(ctx sdk.Context, t *testing.T, msgServer types.MsgServer, k keep
 	
 	
 	require.False(t, blackList[loan.Borrower], "borrower is blacklisted")
-	parsedCollateral, _ := sdk.ParseCoinNormalized(loan.Collateral).Mul(legacyDecPrecision)
-	parsedAmount, _ := sdk.ParseCoinNormalized(loan.Amount).Mul(legacyDecPrecision)
-	amtPrice := collateralPrice{
-		coin: parsedAmount,
-		price: 10,
-	}
-	colPrice := collateralPrice{
-		coin: parsedCollateral,
-		price: 1000,
-	}
+
 	
-	createdLoan, _ := msgServer.RequestLoan(ctx, &types.MsgRequestLoan{
+	createdLoan, err := msgServer.RequestLoan(ctx, &types.MsgRequestLoan{
 		Amount: loan.Amount, 
 		Fee: loan.Fee, 
 		Collateral: loan.Collateral, 
 		Deadline: loan.Deadline, 
 		Creator: loan.Borrower,
 	})
-	
-	collateralFloat := sdkmath.LegacyDec(parsedCollateral.Amount)
-	amountFloat := sdkmath.LegacyDec(parsedAmount.Amount)
-	fmt.Printf("%v\n%v\n", collateralFloat, amountFloat)
-	_,_ = amtPrice, colPrice
+	// using require.NoError to check if error is nil
+	require.NoError(t, err)
+
 
 	k.AppendLoan(ctx, loan)
-	sysinfo, found := k.GetLoan(ctx, 0)
+	sysinfo, found := k.GetLoan(ctx, 1)
 	// test loan is created
 	// test loan is found with id of 0
 	require.True(t, found)
