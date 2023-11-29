@@ -11,8 +11,15 @@ import (
 )
 
 func (escrow *MockBankKeeper) ExpectAny(context context.Context) {
-	escrow.EXPECT().SendCoinsFromAccountToModule(sdk.UnwrapSDKContext(context), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	escrow.EXPECT().SendCoinsFromModuleToAccount(sdk.UnwrapSDKContext(context), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	/* 
+	using gomock.Any() as first argument to mock any context argument 
+	this allows us to test block height for deadline in both
+	liquidate and repay loan
+	using 2 contexts below
+	*/
+	escrow.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	escrow.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	escrow.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	escrow.EXPECT().GetBalance(sdk.UnwrapSDKContext(context), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin{
 			return sdk.Coin{
@@ -20,7 +27,7 @@ func (escrow *MockBankKeeper) ExpectAny(context context.Context) {
 				Amount: sdk.NewInt(1000),
 			}
 		}).AnyTimes()
-	escrow.EXPECT().MintCoins(sdk.UnwrapSDKContext(context), gomock.Any(), gomock.Any()).AnyTimes()
+	escrow.EXPECT().MintCoins(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	/*.DoAndReturn(func(ctx sdk.Context, moduleName string, amt sdk.Coins) error {
 			if amt[0].Denom == "" || amt[0].IsLTE(sdk.NewCoin(amt[0].Denom, sdk.NewInt(0))) {
 				return errors.New("invalid amount")
@@ -30,7 +37,15 @@ func (escrow *MockBankKeeper) ExpectAny(context context.Context) {
 			}
 			return nil
 			}).AnyTimes()*/
-			
+	escrow.EXPECT().BurnCoins(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	/*
+	set two different block heights to test deadline
+	for liquidate and repay loan
+	*/
+	ctx1 := sdk.UnwrapSDKContext(context)
+	ctx1 = ctx1.WithBlockHeight(0)
+	ctx2 := sdk.UnwrapSDKContext(context)
+	ctx2 = ctx2.WithBlockHeight(1000000000000000000)
 }
 
 func coinsOf(amount uint64) sdk.Coins {

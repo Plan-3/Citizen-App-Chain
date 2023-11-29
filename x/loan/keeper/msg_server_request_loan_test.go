@@ -70,6 +70,7 @@ func TestRequestLoan(t *testing.T) {
 		ok, err := transferedCoinsToModule(ctx, t, bank, borrower, lender)
 		require.Equal(t, "ok", ok)
 		require.NoError(t, err)
+		fmt.Println("Request loan test passed")
 		
 }
 
@@ -102,18 +103,18 @@ func createLoan(ctx sdk.Context, t *testing.T, msgServer types.MsgServer, k keep
 	// using require.NoError to check if error is nil
 	require.NoError(t, err)
 
-
+	loan.State = "approved"
 	k.AppendLoan(ctx, loan)
 	sysinfo, found := k.GetLoan(ctx, 1)
 	// test loan is created
 	// test loan is found with id of 0
 	require.True(t, found)
-	fmt.Printf("%v\n%v\n%v\n%v\n%v\n%v\n%v\n%v\n%v\n", sysinfo.Id, sysinfo.Amount, sysinfo.Fee, sysinfo.Collateral, sysinfo.Deadline, sysinfo.State, sysinfo.Borrower, sysinfo.Lender, sysinfo.Timestamp)
+	// fmt.Printf("%v\n%v\n%v\n%v\n%v\n%v\n%v\n%v\n%v\n", sysinfo.Id, sysinfo.Amount, sysinfo.Fee, sysinfo.Collateral, sysinfo.Deadline, sysinfo.State, sysinfo.Borrower, sysinfo.Lender, sysinfo.Timestamp)
 	// testing loan values are correctly stored
 	require.Equal(t, loan.Amount, sysinfo.Amount)
 	require.Equal(t, loan.Fee, sysinfo.Fee)
 	require.Equal(t, loan.Collateral, sysinfo.Collateral)
-	require.Equal(t, loan.State, sysinfo.State)
+	require.Equal(t, "approved", sysinfo.State)
 	require.Equal(t, loan.Borrower, sysinfo.Borrower)
 	require.Equal(t, loan.Lender, sysinfo.Lender)
 	
