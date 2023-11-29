@@ -11,7 +11,7 @@ import (
 	"loan/x/loan/types"
 )
 
-func createNLoan(keeper keeper.Keeper, ctx sdk.Context, n int) []types.Loan {
+func createNLoan(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.Loan {
 	items := make([]types.Loan, n)
 	for i := range items {
 		items[i].Id = keeper.AppendLoan(ctx, items[i])

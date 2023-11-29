@@ -33,8 +33,9 @@ func setUpMsgServer(t testing.TB) (types.MsgServer, keeper.Keeper, context.Conte
 	ctrl := gomock.NewController(t)
 	bankMock := testutil.NewMockBankKeeper(ctrl)
 	k, ctx := keepertest.LoanKeeperWithMocks(t, bankMock)
-	loan.InitGenesis(ctx, k, *types.DefaultGenesis())
-	return keeper.NewMsgServerImpl(k),k, sdk.WrapSDKContext(ctx), ctrl, bankMock
+	loan.InitGenesis(ctx, *k, *types.DefaultGenesis())
+	server := keeper.NewMsgServerImpl(*k)
+	return server, *k, sdk.WrapSDKContext(ctx), ctrl, bankMock
 }
 
 func TestRequestLoan(t *testing.T) {

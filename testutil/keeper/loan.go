@@ -18,11 +18,11 @@ import (
 	"loan/x/loan/types"
 )
 
-func LoanKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
+func LoanKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	return LoanKeeperWithMocks(t, nil)
 }
 
-func LoanKeeperWithMocks(t testing.TB, bank *testutil.MockBankKeeper) (keeper.Keeper, sdk.Context) {
+func LoanKeeperWithMocks(t testing.TB, bank *testutil.MockBankKeeper) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
