@@ -29,6 +29,10 @@ var (
 	}
 )
 
+// sets up the msg server
+// returns a msg server, keeper, context, controller, and bank mock
+// takes in a testing.TB
+// TB is interface common to T B and F testing types from go testing package
 func setUpMsgServer(t testing.TB) (types.MsgServer, keeper.Keeper, context.Context, *gomock.Controller, *testutil.MockBankKeeper) {
 	ctrl := gomock.NewController(t)
 	bankMock := testutil.NewMockBankKeeper(ctrl)
@@ -38,6 +42,11 @@ func setUpMsgServer(t testing.TB) (types.MsgServer, keeper.Keeper, context.Conte
 	return server, *k, sdk.WrapSDKContext(ctx), ctrl, bankMock
 }
 
+// TestRequestLoan tests the request loan functionality
+// Creates a mock loan and checks that no error occured
+// also checks correct mulplication of amount by 10**9
+// also checks that the coins are transferred from the borrower to the module account
+// also checks that the coins are transferred from the module account to the lender
 func TestRequestLoan(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -68,13 +77,19 @@ func TestRequestLoan(t *testing.T) {
 		require.Equal(t, expectedAmount, baseAmount, "amount is not equivalent to 10**9")
 		
 		// test coins are sent from borrower to module account
-		ok, err := transferedCoinsToModule(ctx, t, bank, borrower, lender)
-		require.Equal(t, "ok", ok)
+		passed, err := transferredCoinsToModule(ctx, t, bank, borrower, lender)
+		require.Equal(t, "ok", passed)
 		require.NoError(t, err)
 		fmt.Println("Request loan test passed")
 		
 }
 
+// creates a mock loan 
+// takes in a context, testing.T type, msg server, and keeper
+// context info about block
+// testing.T type manages test state and logs test output
+// msg server handles any messages sent to the module
+// keeper holds info about the module
 func createLoan(ctx sdk.Context, t *testing.T, msgServer types.MsgServer, k keeper.Keeper) types.Loan{
 	// all test values for coin price are 1 set in keeper.go typedloan default case
 	// failed risk check 100 amount collateral < 110
@@ -124,7 +139,8 @@ func createLoan(ctx sdk.Context, t *testing.T, msgServer types.MsgServer, k keep
 	return loan
 }
 
-func transferedCoinsToModule(ctx sdk.Context, t *testing.T, bank *testutil.MockBankKeeper, borrower sdk.AccAddress, lender sdk.AccAddress) (string, error){
+// tests that the coins are transferred from an account to the module account
+func transferredCoinsToModule(ctx sdk.Context, t *testing.T, bank *testutil.MockBankKeeper, borrower sdk.AccAddress, lender sdk.AccAddress) (string, error){
 	// we are not testing any of the cosmos functions here we must assume they are working correctly
 	bank.SendCoinsFromAccountToModule(ctx, borrower, moduleaccount, sdk.NewCoins(sdk.NewCoin("col", sdk.NewInt(50))))
 	expectedBalanceBorrower := sdk.NewCoins(sdk.NewCoin("col", sdk.NewInt(950))) // 1000 (initial) - 50 (loan fee)
@@ -146,7 +162,8 @@ func transferedCoinsToModule(ctx sdk.Context, t *testing.T, bank *testutil.MockB
 	return "ok", nil
 }
 
-func transferedCoinsToBorrower(ctx sdk.Context, t *testing.T, bank *testutil.MockBankKeeper, borrower sdk.AccAddress, lender sdk.AccAddress) (string, error){
+// tests that the coins are transferred from the module account to an account (borrower here)
+func transferredCoinsToBorrower(ctx sdk.Context, t *testing.T, bank *testutil.MockBankKeeper, borrower sdk.AccAddress, lender sdk.AccAddress) (string, error){
 	// we are not testing any of the cosmos functions here we must assume they are working correctly
 	bank.SendCoinsFromModuleToAccount(ctx, moduleaccount, borrower, sdk.NewCoins(sdk.NewCoin("zusd", sdk.NewInt(50))))
 	expectedBalanceModule := sdk.NewCoins(sdk.NewCoin("zusd", sdk.NewInt(950))) // 1000 (initial) - 50 (loan fee)

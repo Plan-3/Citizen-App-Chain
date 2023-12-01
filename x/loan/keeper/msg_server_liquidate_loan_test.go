@@ -17,6 +17,9 @@ func manipulateBlockHeight(ctx sdk.Context, height int64) sdk.Context {
 	return ctx
 }
 
+// TestLiquidateLoan tests the liquidate loan functionality
+// Creates a mock loan and uses manipulateBlockHeight to set the blockheight to 1000000000000000000
+// Then calls the liquidate loan function and checks that no error occured
 func TestLiquidateLoan(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {

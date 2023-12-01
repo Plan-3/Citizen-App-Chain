@@ -22,6 +22,9 @@ func LoanKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	return LoanKeeperWithMocks(t, nil)
 }
 
+// LoanKeeperWithMocks creates a keeper.Keeper with mocked out components useful for unit tests.
+// e.g. bank keeper, auth keeper, etc.
+
 func LoanKeeperWithMocks(t testing.TB, bank *testutil.MockBankKeeper) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)

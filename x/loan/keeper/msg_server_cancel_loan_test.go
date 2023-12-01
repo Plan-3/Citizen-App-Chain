@@ -12,6 +12,10 @@ import (
 )
 
 
+// TestCancelLoan tests the cancel loan functionality
+// Creates a mock loan and changes the state to requested which is the only state that can be cancelled
+// Then calls the cancel loan function and checks that no error occured
+
 
 func TestCancelLoan(t *testing.T) {
 	defer func() {
@@ -21,10 +25,7 @@ func TestCancelLoan(t *testing.T) {
 		}
 		}()
 		msgServer, k, context, ctrl, bank := setUpMsgServer(t)
-		borrower, _ := sdk.AccAddressFromBech32(alice)
-		lender, _ := sdk.AccAddressFromBech32(moduleaccount)
 		ctx := sdk.UnwrapSDKContext(context)
-		_, _ = borrower, lender
 		
 		bank.ExpectAny(context)
 		defer ctrl.Finish()
@@ -40,5 +41,5 @@ func TestCancelLoan(t *testing.T) {
 		cancelLoan, err := msgServer.CancelLoan(ctx, &types.MsgCancelLoan{Id: loan.Id, Creator: loan.Borrower})
 		require.NoError(t, err)
 		_ = cancelLoan
-		fmt.Printf("cancelLoan passed\n")
+		fmt.Printf("CancelLoan passed\n")
 }
