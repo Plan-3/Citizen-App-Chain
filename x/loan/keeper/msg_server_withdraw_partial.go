@@ -30,9 +30,7 @@ func (k msgServer) WithdrawPartial(goCtx context.Context, msg *types.MsgWithdraw
 		return nil, sdkerrors.Wrap(types.ErrInvalidRequest, "Can't parse amount")
 	}
 
-	
-	// collateral and amount should be in cwei units already 
-	// add to var for easier use
+	// add to var for easier use collateral and amount should be in cwei units already 
 	dollarAmount := amount[0].Amount
 	collateralPrice := collateral[0].Amount
 	
@@ -64,10 +62,12 @@ func (k msgServer) WithdrawPartial(goCtx context.Context, msg *types.MsgWithdraw
 		return nil, sdkError
 	}
 	
-	// update loan values
+	/*
+	update loan values might not need to take out zusd
 	newLoanAmount := loanAmount[0].Amount.Sub(zusdToSendBack)
 	newLoanAmountCoin := sdk.NewCoin("zusd", newLoanAmount)
 	loan.Amount = newLoanAmountCoin.String()
+	*/
 	newCollateralAmount := collateralPrice.Sub(dollarAmount)
 	newCollateralAmountCoin := sdk.NewCoin(collateral[0].Denom, newCollateralAmount)
 	loan.Collateral = newCollateralAmountCoin.String()

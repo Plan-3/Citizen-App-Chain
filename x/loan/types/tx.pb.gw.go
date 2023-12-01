@@ -238,9 +238,9 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 }
 
 var (
-	pattern_Msg_RequestLoan_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"loan", "RequestLoan"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_RequestLoan_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"loan", "RequestLoan"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Msg_RepayLoan_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 0, 2, 1}, []string{"loan", "repay"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_RepayLoan_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 0, 2, 1}, []string{"loan", "repay"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

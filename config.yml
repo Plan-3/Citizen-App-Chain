@@ -3,7 +3,7 @@ accounts:
 - name: alice
   coins:
   - 100000000000ctz
-  - 100000000000usdc
+  - 1000000000000usdc
   - 10000000000000000000cstk
   mnemonic: fire expand radio cargo trust swap swear stereo reduce middle illegal surprise
 - name: vault
@@ -13,7 +13,7 @@ accounts:
 - name: carol
   coins:
   - 100000000000cqt
-  - 100000000000usdc
+  - 1000000000000usdc
   # = 1 * 10**18
   - 1000000000000000000cstk
   mnemonic: grape glass exotic van submit move civil spoon penalty hard discover unaware
